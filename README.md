@@ -3,7 +3,7 @@
 An updateable, language-independent repository template: security hooks, GitHub protections, CI, changelog, releases, and documentation.
 
 ```sh
-uvx copier copy --vcs-ref v0.1.2 gh:CafofoLabs/nebula my-project
+uvx copier copy --vcs-ref v0.1.3 gh:CafofoLabs/nebula my-project
 cd my-project
 make setup
 make check
