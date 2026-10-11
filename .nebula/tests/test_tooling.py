@@ -143,8 +143,8 @@ def test_existing_tag_cannot_be_moved(tmp_path, monkeypatch):
         cli.publish()
 
 
-def test_template_copy_and_update_preserve_customizations(tmp_path):
-    from copier import run_copy, run_update
+def test_template_copy_and_update_preserve_customizations(tmp_path, monkeypatch):
+    from copier import run_copy
 
     root = Path.cwd()
     if not (root / "copier.yml").exists():
@@ -201,7 +201,8 @@ def test_template_copy_and_update_preserve_customizations(tmp_path):
     guide.write_text(guide.read_text() + "\nNew template behavior.\n")
     commit(source, "docs(template): add upgrade guidance")
     subprocess.run(["git", "-C", str(source), "tag", "v0.1.1"], check=True)
-    run_update(target, defaults=True, overwrite=True, vcs_ref="v0.1.1")
+    monkeypatch.chdir(target)
+    cli.template_update("v0.1.1")
     assert (target / "README.md").read_text() == "# Custom consumer\n"
     assert (target / "Makefile.project").exists()
     assert 'commands = [["true"]]' in config.read_text()

@@ -554,7 +554,7 @@ def template_update(ref):
     branch = "chore/template-update-" + (ref or "latest")
     validate_branch(branch)
     run("git", "switch", "-c", branch)
-    args = ["copier", "update", "--defaults", "--overwrite"]
+    args = ["copier", "update", "--defaults"]
     if ref:
         args += ["--vcs-ref", ref]
     run(*args)
