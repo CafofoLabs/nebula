@@ -2,6 +2,10 @@
 
 Generated from merged PR titles preserved in squash commits.
 
+## v0.1.2
+
+### Fixes
+- **template:** use supported Copier update CLI options ([#7](https://github.com/CafofoLabs/nebula/pull/7))
 ## v0.1.1
 
 ### Fixes
