@@ -422,7 +422,12 @@ def prepare_pr(kind, bump="auto"):
         return None
     if existing:
         run("git", "fetch", "origin", branch)
-        run("git", "switch", "--track", "-c", branch, f"origin/{branch}")
+        if git("branch", "--list", branch):
+            if git("rev-parse", branch) != git("rev-parse", f"origin/{branch}"):
+                raise ValueError("Local changelog branch diverged; inspect it explicitly")
+            run("git", "switch", branch)
+        else:
+            run("git", "switch", "--track", "-c", branch, f"origin/{branch}")
         changed = git("diff", "--name-only", "origin/main...HEAD").splitlines()
         if any(name != "docs/CHANGELOG.md" for name in changed):
             raise ValueError("Changelog branch contains unrelated changes; refusing to rewrite it")
@@ -519,14 +524,15 @@ def publish():
             raise ValueError(
                 "Existing release tag points to a different commit; refusing to move it"
             )
-    else:
-        run("git", "tag", tag, sha)
-        run("git", "push", "origin", tag)
     notes = Path("docs/CHANGELOG.md").read_text()
     marker = f"## {tag}"
     if marker not in notes:
         raise ValueError("Changelog does not contain the released version")
     body = notes.split(marker, 1)[1].split("\n## ", 1)[0].strip()
+    if not local:
+        run("git", "tag", tag, sha)
+    # Retry a failed tag push before creating release metadata.
+    run("git", "push", "origin", tag)
     releases = api(f"repos/{repo}/releases?per_page=100")
     existing = next((r for r in releases if r["tag_name"] == tag), None)
     if existing:

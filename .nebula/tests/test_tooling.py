@@ -134,7 +134,7 @@ def test_existing_tag_cannot_be_moved(tmp_path, monkeypatch):
     original = cli.run
 
     def run(*args, **kwargs):
-        if args[:2] in [("git", "fetch"), ("git", "merge-base")]:
+        if args[:2] in [("git", "fetch"), ("git", "merge-base"), ("git", "push")]:
             return ""
         return original(*args, **kwargs)
 
@@ -230,7 +230,7 @@ def test_publication_retry_does_not_duplicate_release(tmp_path, monkeypatch):
     releases = []
 
     def run(*args, **kwargs):
-        if args[:2] in [("git", "fetch"), ("git", "merge-base")]:
+        if args[:2] in [("git", "fetch"), ("git", "merge-base"), ("git", "push")]:
             return ""
         return original(*args, **kwargs)
 
@@ -245,3 +245,24 @@ def test_publication_retry_does_not_duplicate_release(tmp_path, monkeypatch):
     cli.publish()
     cli.publish()
     assert len(releases) == 1
+
+
+def test_invalid_notes_do_not_create_a_tag(tmp_path, monkeypatch):
+    repo = repository(tmp_path / "invalid-notes")
+    (repo / "nebula.toml").write_text('[project]\nrepository="Example/project"\n')
+    (repo / "VERSION").write_text("0.1.0\n")
+    (repo / "docs").mkdir()
+    (repo / "docs/CHANGELOG.md").write_text("# Changelog\n")
+    commit(repo, "chore(release): v0.1.0 (#1)")
+    monkeypatch.chdir(repo)
+    original = cli.run
+
+    def run(*args, **kwargs):
+        if args[:2] in [("git", "fetch"), ("git", "merge-base")]:
+            return ""
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(cli, "run", run)
+    with pytest.raises(ValueError, match="Changelog"):
+        cli.publish()
+    assert not cli.git("tag", "--list", "v0.1.0")
