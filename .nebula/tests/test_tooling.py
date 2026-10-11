@@ -178,6 +178,7 @@ def test_template_copy_and_update_preserve_customizations(tmp_path):
         "author_email": "fixture@example.invalid",
     }
     run_copy(str(source), target, data=answers, defaults=True, vcs_ref="v0.1.0")
+    assert (target / "VERSION").read_text() == "0.0.0\n"
     assert not (target / ".nebula").is_symlink()
     assert (target / ".nebula/nebula/cli.py").exists()
     assert not (target / ".readthedocs.yaml").exists()
