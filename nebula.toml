@@ -1,0 +1,12 @@
+[project]
+name = "Nebula"
+repository = "CafofoLabs/nebula"
+documentation = "public"
+
+[git]
+author_name = "Thiago Dias"
+author_email = "thiago@thir.info"
+
+[checks]
+# Additional application checks, executed without a shell.
+commands = []

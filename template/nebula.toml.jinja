@@ -1,0 +1,11 @@
+[project]
+name = {{ project_name | to_json }}
+repository = {{ repository | to_json }}
+documentation = {{ documentation | to_json }}
+
+[git]
+author_name = {{ author_name | to_json }}
+author_email = {{ author_email | to_json }}
+
+[checks]
+commands = []

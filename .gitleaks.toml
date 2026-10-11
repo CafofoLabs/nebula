@@ -1,0 +1,7 @@
+[extend]
+useDefault = true
+
+[[rules]]
+id = "nebula-test-secret"
+description = "Synthetic fixture for verifying the secret-scanning gate"
+regex = 'NEBULA_TEST_SECRET_[A-Z0-9]{24}'

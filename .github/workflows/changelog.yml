@@ -1,0 +1,30 @@
+name: Changelog
+on:
+  push:
+    branches: [main]
+    paths-ignore: [docs/CHANGELOG.md, VERSION]
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+concurrency:
+  group: changelog
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.event_name == 'workflow_dispatch' || !startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          version: 0.12.3
+          python-version: '3.12'
+      - run: uv run --frozen --project .nebula python -m nebula changelog-pr
+        env:
+          GH_TOKEN: ${{ github.token }}
