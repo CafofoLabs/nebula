@@ -434,6 +434,8 @@ def prepare_pr(kind, bump="auto"):
         run(
             "git",
             "merge",
+            "-X",
+            "theirs",
             "origin/main",
             "-m",
             "chore(changelog): reconcile accepted history",
