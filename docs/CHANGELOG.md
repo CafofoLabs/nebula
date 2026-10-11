@@ -2,6 +2,10 @@
 
 Generated from merged PR titles preserved in squash commits.
 
+## v0.1.3
+
+### Fixes
+- **changelog:** refresh generated history across releases ([#10](https://github.com/CafofoLabs/nebula/pull/10))
 ## v0.1.2
 
 ### Fixes
