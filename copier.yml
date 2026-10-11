@@ -1,0 +1,21 @@
+_min_copier_version: "9.10.0"
+_subdirectory: template
+_preserve_symlinks: false
+_skip_if_exists: [README.md, VERSION, docs/CHANGELOG.md]
+project_name:
+  type: str
+  help: Project display name
+repository:
+  type: str
+  help: GitHub owner/repository
+  validator: "{% if not repository or repository.count('/') != 1 %}Use owner/repository{% endif %}"
+documentation:
+  type: str
+  default: public
+  choices: [public, private]
+author_name:
+  type: str
+  help: Personal Git author name
+author_email:
+  type: str
+  help: Verified personal Git author email

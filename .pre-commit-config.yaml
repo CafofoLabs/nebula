@@ -1,0 +1,31 @@
+default_install_hook_types: [pre-commit, commit-msg, pre-push]
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=2048]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: local
+    hooks:
+      - id: nebula-staged-secrets
+        name: Scan staged changes for secrets
+        entry: uv run --frozen --project .nebula python -m nebula secrets staged
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+      - id: nebula-commit-message
+        name: Validate Conventional Commit and attribution
+        entry: uv run --frozen --project .nebula python -m nebula message
+        language: system
+        stages: [commit-msg]
+      - id: nebula-outgoing-secrets
+        name: Scan unpublished history and validate branch
+        entry: uv run --frozen --project .nebula python -m nebula secrets outgoing
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
