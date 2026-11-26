@@ -2,6 +2,10 @@
 
 Generated from merged PR titles preserved in squash commits.
 
+## Unreleased
+
+### Fixes
+- **metadata:** validate only the subject on main pushes ([#12](https://github.com/CafofoLabs/nebula/pull/12))
 ## v0.1.3
 
 ### Fixes
