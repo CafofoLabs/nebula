@@ -57,8 +57,8 @@ def api(path, method="GET", data=None):
     return json.loads(raw) if raw else None
 
 
-def validate_message(text):
-    if not text.strip() or not TITLE.fullmatch(text.splitlines()[0]):
+def validate_message(text, *, merge=False):
+    if not text.strip() or (not merge and not TITLE.fullmatch(text.splitlines()[0])):
         raise ValueError("Use a Conventional Commit title, for example feat(module): add resource")
     if re.search(r"(?im)^co-authored-by:", text):
         raise ValueError("Co-author trailers are not allowed")
@@ -180,15 +180,22 @@ def metadata():
         validate_message(pr["title"])
         validate_branch(pr["head"]["ref"])
         # PRs may contain several commits; validate every new subject and all trailers.
-        messages = git("log", "--format=%B%x00", f"{pr['base']['sha']}..{pr['head']['sha']}")
-        for message in messages.split("\x00"):
-            if message.strip():
-                validate_message(message.strip())
+        # GitHub's Update branch creates merge subjects outside Conventional Commits.
+        records = git(
+            "log", "--format=%P%x00%B%x00", f"{pr['base']['sha']}..{pr['head']['sha']}"
+        ).split("\x00")
+        for index in range(0, len(records) - 1, 2):
+            parents, message = records[index : index + 2]
+            validate_message(message.strip(), merge=len(parents.split()) > 1)
     else:
-        validate_branch(
-            os.environ.get("GITHUB_REF_NAME") or git("branch", "--show-current"), allow_main=True
-        )
-        validate_message(git("log", "-1", "--format=%B"))
+        branch = os.environ.get("GITHUB_REF_NAME") or git("branch", "--show-current")
+        validate_branch(branch, allow_main=True)
+        if branch == "main":
+            # GitHub can append human attribution to an already accepted squash commit.
+            validate_message(git("log", "-1", "--format=%s"))
+        else:
+            parents = git("show", "-s", "--format=%P", "HEAD").split()
+            validate_message(git("log", "-1", "--format=%B"), merge=len(parents) > 1)
 
 
 def check():

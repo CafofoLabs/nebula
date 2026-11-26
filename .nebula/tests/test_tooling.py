@@ -27,6 +27,54 @@ def test_bad_messages(message):
         cli.validate_message(message)
 
 
+def test_merge_commits_skip_title_but_not_trailers():
+    cli.validate_message("Merge branch 'main' into fix/x", merge=True)
+    with pytest.raises(ValueError):
+        cli.validate_message("Merge branch 'main'\n\nCo-authored-by: someone", merge=True)
+
+
+def fake_git(responses):
+    return lambda *args: responses[args[:2]]
+
+
+def test_main_push_ignores_trailer_added_on_squash(monkeypatch):
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "push")
+    monkeypatch.setenv("GITHUB_REF_NAME", "main")
+    # A real git would return only the subject for %s; the trailer must not be requested.
+    monkeypatch.setattr(
+        cli,
+        "git",
+        lambda *args: "chore(release): v1.0.0" if args == ("log", "-1", "--format=%s") else None,
+    )
+    cli.metadata()
+
+
+def test_branch_push_still_rejects_trailers(monkeypatch):
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "push")
+    monkeypatch.setenv("GITHUB_REF_NAME", "fix/x")
+    responses = {("show", "-s"): "a", ("log", "-1"): "fix: correct x\n\nCo-authored-by: someone"}
+    monkeypatch.setattr(cli, "git", fake_git(responses))
+    with pytest.raises(ValueError, match="Co-author"):
+        cli.metadata()
+
+
+def test_pull_request_accepts_update_branch_merges(tmp_path, monkeypatch):
+    event = tmp_path / "event.json"
+    event.write_text(
+        '{"pull_request": {"title": "fix: correct x", "head": {"ref": "fix/x", "sha": "h"},'
+        ' "base": {"sha": "b"}}}'
+    )
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event))
+    log = "a b\x00Merge branch 'main' into fix/x\n\x00c\x00fix: correct x\n\x00"
+    monkeypatch.setattr(cli, "git", fake_git({("log", "--format=%P%x00%B%x00"): log}))
+    cli.metadata()
+    bad = "a\x00Merge branch 'main' into fix/x\n\x00"
+    monkeypatch.setattr(cli, "git", fake_git({("log", "--format=%P%x00%B%x00"): bad}))
+    with pytest.raises(ValueError, match="Conventional"):
+        cli.metadata()
+
+
 @pytest.mark.parametrize("branch", ["codex/work", "feature/codex-work", "main", "work", "feature/"])
 def test_bad_branches(branch):
     with pytest.raises(ValueError):
